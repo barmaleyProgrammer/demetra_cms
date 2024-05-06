@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  app:
+    image: 'komunalka-cms-img'
+    build:
+      context: .
+      target: app
+    restart: unless-stopped
+    ports:
+      - '8000:8000/tcp'
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    logging:
+      options:
+        max-size: "1m"
+        max-file: "1"
+
+  mysql:
+    image: 'mysql:8.2'
+    restart: unless-stopped
+    ports:
+      - '${DB_FORWARD_PORT:-3306}:3306/tcp'
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    volumes:
+      - 'mysql:/var/lib/mysql'
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-p${DB_PASSWORD}" ]
+      retries: 3
+      timeout: 5s
+
+volumes:
+  mysql:
+    driver: local
